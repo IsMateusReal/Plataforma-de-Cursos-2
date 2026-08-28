@@ -1,0 +1,203 @@
+generator client {
+  provider = "prisma-client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Usuario {
+  id_usuario    Int       @id @default(autoincrement())
+  nomeCompleto  String
+  email         String    @unique
+  senhaHash     String
+  dataCadastro  DateTime  @default(now())
+
+  cursosInstrutor Curso[]         @relation("InstrutorCursos")
+  matriculas      Matricula[]
+  progressoAulas  ProgressoAula[]
+  avaliacoes      Avaliacao[]
+  certificados    Certificado[]
+  assinaturas     Assinatura[]
+
+  @@map("usuarios")
+}
+
+model Categoria {
+  id_categoria Int      @id @default(autoincrement())
+  nome         String   @unique
+  descricao    String?
+
+  cursos       Curso[]
+  trilhas      Trilha[]
+
+  @@map("categorias")
+}
+
+model Curso {
+  id_curso       Int       @id @default(autoincrement())
+  titulo         String
+  descricao      String?
+  id_instrutor   Int
+  id_categoria   Int
+  nivel          String
+  dataPublicacao DateTime  @default(now())
+  totalAulas     Int       @default(0)
+  totalHoras     Float     @default(0)
+
+  instrutor      Usuario        @relation("InstrutorCursos", fields: [id_instrutor], references: [id_usuario])
+  categoria      Categoria      @relation(fields: [id_categoria], references: [id_categoria])
+  modulos        Modulo[]
+  matriculas     Matricula[]
+  avaliacoes     Avaliacao[]
+  trilhasCursos  TrilhaCurso[]
+  certificados   Certificado[]
+
+  @@map("cursos")
+}
+
+model Modulo {
+  id_modulo Int    @id @default(autoincrement())
+  id_curso  Int
+  titulo    String
+  ordem     Int
+
+  curso     Curso  @relation(fields: [id_curso], references: [id_curso])
+  aulas     Aula[]
+
+  @@map("modulos")
+}
+
+model Aula {
+  id_aula        Int             @id @default(autoincrement())
+  id_modulo      Int
+  titulo         String
+  tipoConteudo   String
+  url_conteudo   String
+  duracaoMinutos Int
+  ordem          Int
+
+  modulo         Modulo          @relation(fields: [id_modulo], references: [id_modulo])
+  progressos     ProgressoAula[]
+
+  @@map("aulas")
+}
+
+model Matricula {
+  id_matricula  Int       @id @default(autoincrement())
+  id_usuario    Int
+  id_curso      Int
+  dataMatricula DateTime  @default(now())
+  dataConclusao DateTime?
+
+  usuario       Usuario   @relation(fields: [id_usuario], references: [id_usuario])
+  curso         Curso     @relation(fields: [id_curso], references: [id_curso])
+
+  @@map("matriculas")
+}
+
+model ProgressoAula {
+  id_usuario    Int
+  id_aula       Int
+  dataConclusao DateTime?
+  status        String
+
+  usuario       Usuario   @relation(fields: [id_usuario], references: [id_usuario])
+  aula          Aula      @relation(fields: [id_aula], references: [id_aula])
+
+  @@id([id_usuario, id_aula])
+  @@map("progresso_aulas")
+}
+
+model Avaliacao {
+  id_avaliacao  Int      @id @default(autoincrement())
+  id_usuario    Int
+  id_curso      Int
+  nota          Int
+  comentario    String?
+  dataAvaliacao DateTime @default(now())
+
+  usuario       Usuario  @relation(fields: [id_usuario], references: [id_usuario])
+  curso         Curso    @relation(fields: [id_curso], references: [id_curso])
+
+  @@map("avaliacoes")
+}
+
+model Trilha {
+  id_trilha    Int           @id @default(autoincrement())
+  titulo       String
+  descricao    String?
+  id_categoria Int
+
+  categoria    Categoria     @relation(fields: [id_categoria], references: [id_categoria])
+  cursos       TrilhaCurso[]
+  certificados Certificado[]
+
+  @@map("trilhas")
+}
+
+model TrilhaCurso {
+  id_trilha Int
+  id_curso  Int
+  ordem     Int
+
+  trilha    Trilha @relation(fields: [id_trilha], references: [id_trilha])
+  curso     Curso  @relation(fields: [id_curso], references: [id_curso])
+
+  @@id([id_trilha, id_curso])
+  @@map("trilhas_cursos")
+}
+
+model Certificado {
+  id_certificado    Int      @id @default(autoincrement())
+  id_usuario        Int
+  id_curso          Int?
+  id_trilha         Int?
+  codigoVerificacao String   @unique
+  dataEmissao       DateTime @default(now())
+
+  usuario           Usuario  @relation(fields: [id_usuario], references: [id_usuario])
+  curso             Curso?   @relation(fields: [id_curso], references: [id_curso])
+  trilha            Trilha?  @relation(fields: [id_trilha], references: [id_trilha])
+
+  @@map("certificados")
+}
+
+model Plano {
+  id_plano     Int          @id @default(autoincrement())
+  nome         String
+  descricao    String?
+  preco        Decimal      @db.Decimal(10, 2)
+  duracaoMeses Int
+
+  assinaturas  Assinatura[]
+
+  @@map("planos")
+}
+
+model Assinatura {
+  id_assinatura Int         @id @default(autoincrement())
+  id_usuario    Int
+  id_plano      Int
+  dataInicio    DateTime    @default(now())
+  dataFim       DateTime
+
+  usuario       Usuario     @relation(fields: [id_usuario], references: [id_usuario])
+  plano         Plano       @relation(fields: [id_plano], references: [id_plano])
+  pagamentos    Pagamento[]
+
+  @@map("assinaturas")
+}
+
+model Pagamento {
+  id_pagamento         Int        @id @default(autoincrement())
+  id_assinatura        Int
+  valorPago            Decimal    @db.Decimal(10, 2)
+  dataPagamento        DateTime   @default(now())
+  metodoPagamento      String
+  id_transacao_gateway String
+
+  assinatura           Assinatura @relation(fields: [id_assinatura], references: [id_assinatura])
+
+  @@map("pagamentos")
+}
