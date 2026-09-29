@@ -1,5 +1,7 @@
 generator client {
-  provider = "prisma-client"
+  provider     = "prisma-client"
+  output       = "../src/generated/client"
+  moduleFormat = "cjs"
 }
 
 datasource db {
@@ -118,7 +120,7 @@ model Avaliacao {
   dataAvaliacao DateTime @default(now())
 
   usuario       Usuario  @relation(fields: [id_usuario], references: [id_usuario])
-  curso         Curso    @relation(fields: [id_curso], references: [id_curso])
+  curso         Curso     @relation(fields: [id_curso], references: [id_curso])
 
   @@map("avaliacoes")
 }
