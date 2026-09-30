@@ -34,6 +34,14 @@ export class CoursesService {
           select: { id_usuario: true, nomeCompleto: true, email: true },
         },
         categoria: true,
+        modulos: {
+          orderBy: { ordem: 'asc' },
+          include: {
+            aulas: {
+              orderBy: { ordem: 'asc' },
+            },
+          },
+        },
       },
     });
   }
